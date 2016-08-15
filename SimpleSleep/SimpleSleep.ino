@@ -3,6 +3,10 @@
   RTCzero library example at https://github.com/arduino-libraries/RTCZero
   By: CaveMoa
   Date: 30/12/15
+
+  Modified by:  Andre Hefer
+  Date:        15 Aug 2016
+  Test to see of sketch works on Adafruit Feather M0 proto
 */
 
 #include <RTCZero.h>
@@ -21,16 +25,16 @@ void loop()
 {
 
   // Simple indication of being awake
-  digitalWrite(13, HIGH);   // turn the LED on 
-  delay(100);              
-  digitalWrite(13, LOW);    // turn the LED off
-  delay(100);
-  digitalWrite(13, HIGH);   // turn the LED on 
-  delay(100);
-  digitalWrite(13, LOW);    // turn the LED off
+  digitalWrite(12, HIGH);   // turn the LED on 
+  delay(200);              
+  digitalWrite(12, LOW);    // turn the LED off
+  delay(200);
+  digitalWrite(12, HIGH);   // turn the LED on 
+  delay(200);
+  digitalWrite(12, LOW);    // turn the LED off
   
 
-  AlarmTime += 5; // Adds 5 seconds to alarm time
+  AlarmTime += 10; // Adds 10 seconds to alarm time
   AlarmTime = AlarmTime % 60; // checks for roll over 60 seconds and corrects
   rtc.setAlarmSeconds(AlarmTime); // Wakes at next alarm time, i.e. every 5 secs
   
