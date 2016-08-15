@@ -1,10 +1,16 @@
 /*
   Simple Logger using internal RTC for Arduino Zero
 
- Created by:  Jonathan DAvies
+ Created by:  Jonathan Davies
  Date:        21 Dec 2015
  Version:     0.3
- avhmod
+ 
+ Modified by:  Andre Hefer
+ Date:        15 Aug 2016
+ Version:     0.3a
+ Test to see of sketch works with Adafruit Feather / Adalogger featherwing
+ Added external LED flasher on pin 12
+ changed date/time to YYYY/MM/DD hh:mm:ss format
 */
 
 
@@ -13,24 +19,27 @@
 #include <RTCZero.h>
 
 
-#define cardSelect 4  // Set the pins used
+//#define cardSelect 4  // Set the pins used
+#define cardSelect 10  // Set (Adalogger) the pins used
 #define VBATPIN A7    // Battery Voltage on Pin A7
+/*
 #ifdef ARDUINO_SAMD_ZERO
    #define Serial SerialUSB
 #endif
+********************/
 
 File logfile;   // Create file object
 
 RTCZero rtc;    // Create RTC object
 
 /* Change these values to set the current initial time */
-const byte hours = 0;
-const byte minutes = 0;
+const byte hours = 16;
+const byte minutes = 23;
 const byte seconds = 0;
 /* Change these values to set the current initial date */
-const byte day = 1;
-const byte month = 1;
-const byte year = 15;
+const byte day = 15;
+const byte month = 8;
+const byte year = 16;
 
 
 //////////////    Setup   ///////////////////
@@ -76,7 +85,8 @@ void setup() {
   Serial.println(filename);
 
   pinMode(13, OUTPUT);
-  pinMode(8, OUTPUT);
+  //pinMode(8, OUTPUT);
+  pinMode(12, OUTPUT);
   Serial.println("Ready!");
 }
 
@@ -84,8 +94,9 @@ uint8_t i=0;
 
 ///////////////   Loop    //////////////////
 void loop() {
-  digitalWrite(8, HIGH);  // Turn the green LED on
-
+  //digitalWrite(8, HIGH);  // Turn the green LED on
+  digitalWrite(12, HIGH);  // Rigged up external LED on pin12 / no internal led
+  
   float measuredvbat = analogRead(VBATPIN);
   measuredvbat *= 2;    // we divided by 2, so multiply back
   measuredvbat *= 3.3;  // Multiply by 3.3V, our reference voltage
@@ -102,22 +113,24 @@ void loop() {
   */
   
   // Print data and time followed by battery voltage to SD card
-  logfile.print(rtc.getDay());
-  logfile.print("/");
-  logfile.print(rtc.getMonth());
-  logfile.print("/");
+  logfile.print("20"); //YYYY year format
   logfile.print(rtc.getYear());
+  logfile.print("/");
+  print2digits(rtc.getMonth());
+  logfile.print("/");
+  print2digits(rtc.getDay());
   logfile.print("\t");
-  logfile.print(rtc.getHours());
+  print2digits(rtc.getHours());
   logfile.print(":");
-  logfile.print(rtc.getMinutes());
+  print2digits(rtc.getMinutes());
   logfile.print(":");
-  logfile.print(rtc.getSeconds());
+  print2digits(rtc.getSeconds());
   logfile.print(", ");
   logfile.println(measuredvbat);   // Print battery voltage
   logfile.flush();
   
-  digitalWrite(8, LOW);   // Turn the green LED off
+  //digitalWrite(8, LOW);   // Turn the green LED off
+  digitalWrite(12, LOW);   // Turn the green LED off
   
   delay(10000);   // Simple 10 second delay
 }
@@ -138,4 +151,12 @@ void error(uint8_t errno) {
       delay(200);
     }
   }
+}
+
+//pad out date/time fields two two digits
+void print2digits(int number) {
+  if (number >= 0 && number < 10) {
+    logfile.print('0');
+  }
+  logfile.print(number);
 }
