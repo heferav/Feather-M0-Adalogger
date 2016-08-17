@@ -4,7 +4,9 @@
   By: CaveMoa
   Date: 30/12/15
 */
+/* Not required on Feather M0
 #define Serial SerialUSB
+*/
 #include <RTCZero.h>
 
 
@@ -52,7 +54,7 @@ void loop()
   delay(1000);  // Delay added to make serial more reliable
   
   Serial.begin(9600);
-  while (! Serial); // Wait until Serial is ready
+  //while (! Serial); // Wait until Serial is ready
   Serial.println("Awake");  
 }
 
