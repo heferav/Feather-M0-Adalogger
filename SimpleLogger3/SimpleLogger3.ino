@@ -11,8 +11,9 @@
  Test to see of sketch works with Adafruit Feather / Adalogger featherwing
  (i) Added external LED flasher on pin 12
  (ii) changed date/time to YYYY/MM/DD hh:mm:ss format
- (iii) Sets Featherwing M0's onboard RTC using data from Adalogger featherwing,
+ (iii) Syncs Featherwing M0's onboard RTC to more accurate RTC on featherwing (Adalogger)
        which has a more accurate RTC (PCF8523) with battery backup
+ (iv) Added function to write timestamp (String) to a logfile
 */
 
 
@@ -36,23 +37,18 @@ File logfile;       // Create file object
 RTC_PCF8523 rtcWNG; // Create RTC object on the adalogger featherwing
 RTCZero rtcM0;      // Create RTC object for Feather M0 onboard RTC
 
+String timestamp = ""; //Timestamp to write to logfile
+String strNumber; // For padding leading zero onto digits
 
 //////////////    Setup   ///////////////////
 void setup() {
 
-  rtcM0.begin();    // Start the RTC
-  //rtcM0.setTime(hours, minutes, seconds);   // Set the time
-  //rtcM0.setDate(day, month, year);    // Set the date
-  
   /* If you want output for debugging and the Feather to wait for you
   to open a serial port uncomment the the lines below.
   */
    while (! Serial); // Wait until Serial is ready
    Serial.begin(115200);
    Serial.println("\r\nAnalog logger test");
-  
-  pinMode(13, OUTPUT);
-
 
   // see if the card is present and can be initialized:
   if (!SD.begin(cardSelect)) {
@@ -78,18 +74,21 @@ void setup() {
   }
   Serial.print("Writing to "); 
   Serial.println(filename);
-
+  
+  //LED status lights
   pinMode(13, OUTPUT);
   //Using LED on external breakout board
   pinMode(12, OUTPUT);
   Serial.println("Ready!");
 
-   //******************* START RTC_PCF8523 INITIAL SETUP *********************
+  rtcM0.begin();    // Start the RTC (Feather M0 onboard)
+
+   //**************** START ADALOGGER RTC_PCF8523 INITIAL SETUP ******************
   if (! rtcWNG.begin()) {
     Serial.println("Couldn't find RTC (Adalogger)");
     while (1);
   }
-  //******************* END RTC_PCF8523 INITIAL SETUP ***********************
+  //********************* END ADALOGGER RTC_PCF8523 INITIAL SETUP ****************
 
   Serial.println("Before syncing to featherwing RTC: ");
   show_M0_rtc_date_and_time();
@@ -119,19 +118,9 @@ void loop() {
   
     
   // Print data and RTC (M0) time followed by battery voltage to SD card
-  logfile.print("20"); //YYYY year format
-  logfile.print(rtcM0.getYear());
-  logfile.print("/");
-  print2digits_F(rtcM0.getMonth());
-  logfile.print("/");
-  print2digits_F(rtcM0.getDay());
-  logfile.print("\t");
-  print2digits_F(rtcM0.getHours());
-  logfile.print(":");
-  print2digits_F(rtcM0.getMinutes());
-  logfile.print(":");
-  print2digits_F(rtcM0.getSeconds());
-  logfile.print(", ");
+  M0_rtc_timestamp(timestamp); // create String timestamp 
+  logfile.print(timestamp);
+  logfile.print(", "); // CSV field separator
   logfile.println(measuredvbat);   // Print battery voltage
   logfile.flush();
   
@@ -159,13 +148,29 @@ void error(uint8_t errno) {
   }
 }
 
-//Padding date/time fields two two digits -- to logfile
-void print2digits_F(int number) {
-  if (number >= 0 && number < 10) {
-    logfile.print('0');
-  }
-  logfile.print(number);
+//Timestamp from onboard RTC date/time with leading zero padding
+void M0_rtc_timestamp(String &timestamp){   
+    timestamp = String(rtcM0.getYear() +2000) + "/";
+    pad2digits(rtcM0.getMonth(),strNumber);
+    timestamp +=  strNumber + "/";
+    pad2digits(rtcM0.getDay(),strNumber);
+    timestamp +=  strNumber + " ";
+    pad2digits(rtcM0.getHours(),strNumber);
+    timestamp +=  strNumber + ":";
+    pad2digits(rtcM0.getMinutes(),strNumber);
+    timestamp +=  strNumber + ":";
+    pad2digits(rtcM0.getSeconds(),strNumber);
+    timestamp +=  strNumber;  
 }
+
+void pad2digits(int number,String &strNumber) {
+  if (number >= 0 && number < 10) {
+    strNumber = "0" + String(number);
+  } else {
+    strNumber = String(number);
+  }
+}
+
 
 //Print onboard RTC date/time to terminal
 void show_M0_rtc_date_and_time(){   
